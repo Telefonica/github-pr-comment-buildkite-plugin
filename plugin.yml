@@ -8,6 +8,10 @@ configuration:
   properties:
     comment:
       type: string
+    remo:
+      type: string
+    commit:
+      type: string
   required:
     - comment
   additionalProperties: false
