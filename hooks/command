@@ -3,7 +3,6 @@
 set -euo pipefail
 
 function getPRs() {
-
     curl -sSig \
         -u apikey:${GITHUB_TOKEN} \
         -H 'Accept: application/vnd.github.v3+json' \
@@ -22,18 +21,21 @@ function getPRs() {
 
 function addComment() {
     local PR=$1
-     jq -n --arg msg "${BUILDKITE_PLUGIN_GITHUB_PR_COMMENT_COMMENT}" '{body: $msg}' | curl -sSg \
+
+    echo "~~~ Posting comment to PR $PR"
+
+    jq -n --arg msg "${BUILDKITE_PLUGIN_GITHUB_PR_COMMENT_COMMENT}" '{body: $msg}' | curl -sSig \
         -u apikey:${GITHUB_TOKEN} \
         -H 'Accept: application/vnd.github.v3+json' \
         -H 'Content-Type: application/json' \
         -X POST \
         -d@- \
-        "https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/issues/${PR}/comments" \
+        "https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/issues/${PR}/comments"
 }
 
 if [[ -z "${GITHUB_TOKEN:-}" ]]; then
-  echo 'Error: GITHUB_TOKEN environment variable not set'
-  echo 'A Github personal access token with repo permissions is needed to comment on pull requests'
+  echo "Error: GITHUB_TOKEN environment variable not set"
+  echo "A Github personal access token with repo permissions is needed to comment on pull requests"
   exit 1
 fi
 
