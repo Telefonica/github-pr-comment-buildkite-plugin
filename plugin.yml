@@ -1,0 +1,13 @@
+name: github_pr_comment
+description: Post a comment to the PR this commit belongs to
+author: https://github.com/jmendiara
+requirements:
+  - jq
+  - curl
+configuration:
+  properties:
+    comment:
+      type: string
+  required:
+    - comment
+  additionalProperties: false
