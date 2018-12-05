@@ -3,14 +3,6 @@
 set -euo pipefail
 
 function getPRs() {
-    curl -sSig \
-        -u apikey:${GITHUB_TOKEN} \
-        -H 'Accept: application/vnd.github.v3+json' \
-        -H 'Content-Type: application/json' \
-        -X GET \
-        "https://api.github.com/search/issues?q=${BUILDKITE_COMMIT}+type%3Apr+is%3Aopen+repo%3A${GITHUB_USER}%2F${GITHUB_REPO}"
-
-
     echo $(curl -sSg \
         -u apikey:${GITHUB_TOKEN} \
         -H 'Accept: application/vnd.github.v3+json' \
@@ -24,7 +16,7 @@ function addComment() {
 
     echo "~~~ Posting comment to PR $PR"
 
-    jq -n --arg msg "${BUILDKITE_PLUGIN_GITHUB_PR_COMMENT_COMMENT}" '{body: $msg}' | curl -sSig \
+    jq -n --arg msg "${BUILDKITE_PLUGIN_GITHUB_PR_COMMENT_COMMENT}" '{body: $msg}' | curl -sSg \
         -u apikey:${GITHUB_TOKEN} \
         -H 'Accept: application/vnd.github.v3+json' \
         -H 'Content-Type: application/json' \
@@ -45,6 +37,8 @@ if [[ $BUILDKITE_REPO =~ $re ]]; then
     GITHUB_USER=${BASH_REMATCH[4]}
     GITHUB_REPO=${BASH_REMATCH[5]}
 fi
+
+env
 
 for PR in $(getPRs); do
     addComment $PR
