@@ -7,26 +7,27 @@ function getPRs() {
         -u apikey:${GITHUB_TOKEN} \
         -H 'Accept: application/vnd.github.v3+json' \
         -H 'Content-Type: application/json' \
-        -X GET "https://api.github.com/search/issues?q=${BUILDKITE_COMMIT}+type%3Apr+is%3Aopen+repo%3A${GITHUB_USER}%2F${GITHUB_REPO}" | jq -j '.items | map(.number) | .[]')
+        -X GET \
+        "https://api.github.com/search/issues?q=${BUILDKITE_COMMIT}+type%3Apr+is%3Aopen+repo%3A${GITHUB_USER}%2F${GITHUB_REPO}" | jq -j '.items | map(.number) | .[]')
 }
 
 function addComment() {
     local PR=$1
-     curl -sSg \
+
+    echo "~~~ Posting comment to PR $PR"
+
+    jq -n --arg msg "${BUILDKITE_PLUGIN_GITHUB_PR_COMMENT_COMMENT}" '{body: $msg}' | curl -sSg \
         -u apikey:${GITHUB_TOKEN} \
         -H 'Accept: application/vnd.github.v3+json' \
         -H 'Content-Type: application/json' \
-        -X POST "https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/issues/${PR}/comments" \
-        -d @- << EOF
-{
-    "body": "${BUILDKITE_PLUGIN_GITHUB_PR_COMMENT_COMMENT}"
-}
-EOF
+        -X POST \
+        -d@- \
+        "https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/issues/${PR}/comments"
 }
 
 if [[ -z "${GITHUB_TOKEN:-}" ]]; then
-  echo 'Error: GITHUB_TOKEN environment variable not set'
-  echo 'A Github personal access token with repo permissions is needed to comment on pull requests'
+  echo "Error: GITHUB_TOKEN environment variable not set"
+  echo "A Github personal access token with repo permissions is needed to comment on pull requests"
   exit 1
 fi
 
