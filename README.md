@@ -6,7 +6,7 @@ buildkite plugin to post a comment in a PR
 ```yml
 steps:
   plugins:
-    - telefonica/github-pr-comment#0.0.3:
+    - telefonica/github-pr-comment#0.0.4:
         comment: Some text
         pr: ${BUILDKITE_PULL_REQUEST} # Optional, PR Number to add the comment
         repo: ${BUILDKITE_PULL_REQUEST_REPO} # Optional, format git://github.com:user/repo.git)
