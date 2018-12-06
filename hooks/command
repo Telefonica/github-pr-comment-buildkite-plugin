@@ -40,10 +40,10 @@ fi
 
 echo "Posting comment to PR $PR in ${GITHUB_USER}/${GITHUB_REPO}"  1>&2
 
-# jq -n --arg msg "${BUILDKITE_PLUGIN_GITHUB_PR_COMMENT_COMMENT}" '{body: $msg}' | curl -sSg \
-#     -u apikey:${GITHUB_TOKEN} \
-#     -H 'Accept: application/vnd.github.v3+json' \
-#     -H 'Content-Type: application/json' \
-#     -X POST \
-#     -d@- \
-#     "https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/issues/${PR}/comments"
+jq -n --arg msg "${BUILDKITE_PLUGIN_GITHUB_PR_COMMENT_COMMENT}" '{body: $msg}' | curl -sSg \
+    -u apikey:${GITHUB_TOKEN} \
+    -H 'Accept: application/vnd.github.v3+json' \
+    -H 'Content-Type: application/json' \
+    -X POST \
+    -d@- \
+    "https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/issues/${PR}/comments"
