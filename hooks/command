@@ -2,37 +2,8 @@
 
 set -euo pipefail
 
-function getPRs() {
-    echo $(curl -sSg \
-        -u apikey:${GITHUB_TOKEN} \
-        -H 'Accept: application/vnd.github.v3+json' \
-        -H 'Content-Type: application/json' \
-        -X GET \
-        "https://api.github.com/search/issues?q=${SHA}+type%3Apr+is%3Aopen+repo%3A${GITHUB_USER}%2F${GITHUB_REPO}" | jq -j '.items | map(.number) | .[]')
-}
-
-function addComment() {
-    local PR=$1
-
-    echo "~~~ Posting comment to PR $PR"
-
-    jq -n --arg msg "${BUILDKITE_PLUGIN_GITHUB_PR_COMMENT_COMMENT}" '{body: $msg}' | curl -sSg \
-        -u apikey:${GITHUB_TOKEN} \
-        -H 'Accept: application/vnd.github.v3+json' \
-        -H 'Content-Type: application/json' \
-        -X POST \
-        -d@- \
-        "https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/issues/${PR}/comments"
-}
-
-if [[ -z "${GITHUB_TOKEN:-}" ]]; then
-  echo "Error: GITHUB_TOKEN environment variable not set"
-  echo "A Github personal access token with repo permissions is needed to comment on pull requests"
-  exit 1
-fi
-
-SHA=${BUILDKITE_PLUGIN_GITHUB_PR_COMMENT_COMMIT:-${BUILDKITE_COMMIT}}
-REPO=${BUILDKITE_PLUGIN_GITHUB_PR_COMMENT_REPO:-${BUILDKITE_REPO}}
+REPO=${BUILDKITE_PLUGIN_GITHUB_PR_COMMENT_REPO:-${BUILDKITE_PULL_REQUEST_REPO}}
+PR=${BUILDKITE_PLUGIN_GITHUB_PR_COMMENT_PR:-${BUILDKITE_PULL_REQUEST}}
 
 re="^(https|git)(:\/\/|@)([^\/:]+)[\/:]([^\/:]+)\/(.+).git$"
 
@@ -41,6 +12,38 @@ if [[ $REPO =~ $re ]]; then
     GITHUB_REPO=${BASH_REMATCH[5]}
 fi
 
-for PR in $(getPRs); do
-    addComment $PR
-done
+if [[ -z "${PR:-}" ]]; then
+  echo "Warn: PR to comment is missing. Skipping" 1>&2
+  exit 0
+fi
+
+if [[ -z "${GITHUB_USER:-}" ]]; then
+  echo "Warn: Cannot identify github user/org. Skipping" 1>&2
+  exit 0
+fi
+
+if [[ -z "${GITHUB_REPO:-}" ]]; then
+  echo "Warn: Cannot identify github repo. Skipping" 1>&2
+  exit 0
+fi
+
+if [[ -z "${GITHUB_TOKEN:-}" ]]; then
+  echo "Error: GITHUB_TOKEN environment variable not set"  1>&2
+  echo "A Github personal access token with repo permissions is needed to comment on pull requests" 1>&2
+  exit 1
+fi
+
+if [[ -z "${BUILDKITE_PLUGIN_GITHUB_PR_COMMENT_COMMENT:-}" ]]; then
+  echo "Error: comment property in the plugin es mandatory" 1>&2
+  exit 1
+fi
+
+echo "Posting comment to PR $PR in ${GITHUB_USER}/${GITHUB_REPO}"  1>&2
+
+# jq -n --arg msg "${BUILDKITE_PLUGIN_GITHUB_PR_COMMENT_COMMENT}" '{body: $msg}' | curl -sSg \
+#     -u apikey:${GITHUB_TOKEN} \
+#     -H 'Accept: application/vnd.github.v3+json' \
+#     -H 'Content-Type: application/json' \
+#     -X POST \
+#     -d@- \
+#     "https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/issues/${PR}/comments"
