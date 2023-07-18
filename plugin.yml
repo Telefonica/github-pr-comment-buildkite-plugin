@@ -12,6 +12,9 @@ configuration:
       type: string
     commit:
       type: string
+    dynamic:
+      type: boolean
+      default: false
   required:
     - comment
   additionalProperties: false
